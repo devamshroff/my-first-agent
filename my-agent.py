@@ -29,34 +29,33 @@ except Exception as e:
     exit(1)
 
 # Loading animation function
-def show_loading(stop_event):
-    """Display animated loading dots while waiting for response"""
-    # Alternate between "..." and ".." so the last dot appears to blink
-    dots = ["...", ".."]
-    i = 0
-    while not stop_event.is_set():
-        # Use \r to overwrite the same line, and flush to show immediately
-        sys.stdout.write(f"\rThinking{dots[i % len(dots)]}")
-        sys.stdout.flush()
-        i += 1
-        time.sleep(0.5)
-    # Clear the loading line when done
-    sys.stdout.write("\r" + " " * 20 + "\r")
-    sys.stdout.flush()
+# def show_loading(stop_event):
+#     """Display animated loading dots while waiting for response"""
+#     # Alternate between "..." and ".." so the last dot appears to blink
+#     dots = ["...", ".."]
+#     i = 0
+#     while not stop_event.is_set():
+#         # Use \r to overwrite the same line, and flush to show immediately
+#         sys.stdout.write(f"\rThinking{dots[i % len(dots)]}")
+#         sys.stdout.flush()
+#         i += 1
+#         time.sleep(0.5)
+#     # Clear the loading line when done
+#     sys.stdout.write("\r" + " " * 20 + "\r")
+#     sys.stdout.flush()
 
-def start_loading_animation():
-    """Start the loading animation and return a function to stop it"""
-    stop_event = threading.Event()
-    loading_thread = threading.Thread(target=show_loading, args=(stop_event,))
-    loading_thread.daemon = True
-    loading_thread.start()
+# def start_loading_animation():
+#     """Start the loading animation and return a function to stop it"""
+#     stop_event = threading.Event()
+#     loading_thread = threading.Thread(target=show_loading, args=(stop_event,))
+#     loading_thread.daemon = True
+#     loading_thread.start()
     
-    def stop_fn():
-        """Stop the loading animation"""
-        stop_event.set()
-        loading_thread.join()
-    
-    return stop_fn
+#     def stop_fn():
+#         """Stop the loading animation"""
+#         stop_event.set()
+#         loading_thread.join()
+#     return stop_fn
 
 # Create a response using the chat completions API
 # Why chat/completions instead of /v1/responses?
