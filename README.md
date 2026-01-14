@@ -2,7 +2,7 @@ To run locally:
 
 1. Create virtual env with Python version > 3.10
 Create .env file with OPEN
-python3.12 -m venv .venv   
+python3.1X -m venv .venv   
 
 2. source .venv/bin/activate
    
