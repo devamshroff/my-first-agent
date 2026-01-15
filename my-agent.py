@@ -9,9 +9,25 @@ import sys
 # Using gpt-4o-mini: most cost-effective model that supports function calling for Google Suite actions
 MODEL = "gpt-4o-mini"
 
+# constants
+ACTION = "ACTION"
+NON_ACTION = "NON_ACTION"
+N = "N"
+E = "E"
+
 ### GOALS:
 ### create a simple AI agent that can answer questions and interact with google suite of apps to perform tasks
-### right now we are using the open AI API to answer questions
+### A. use the open AI API to answer questions -- done
+### B. enable actions 
+###         we must decide if a query is an action. ask LLM? 
+###     1. send action query + all tools available to LLM
+###         how do you get all tools available?
+###     2. LLM decides which tool would be best to use
+###         how do you extract the answer in a reliable way? "give a one word answer"?
+###     3. agent then has to execute the tool
+###         no idea how to do this without composio
+###     4. send the result back to LLM to generate natural query response
+###         easy peasy
 
 print("Welcome to Devam's first AI Agent")
 
@@ -28,34 +44,6 @@ except Exception as e:
     print(f"✗ Authentication failed: {e}")
     exit(1)
 
-# Loading animation function
-# def show_loading(stop_event):
-#     """Display animated loading dots while waiting for response"""
-#     # Alternate between "..." and ".." so the last dot appears to blink
-#     dots = ["...", ".."]
-#     i = 0
-#     while not stop_event.is_set():
-#         # Use \r to overwrite the same line, and flush to show immediately
-#         sys.stdout.write(f"\rThinking{dots[i % len(dots)]}")
-#         sys.stdout.flush()
-#         i += 1
-#         time.sleep(0.5)
-#     # Clear the loading line when done
-#     sys.stdout.write("\r" + " " * 20 + "\r")
-#     sys.stdout.flush()
-
-# def start_loading_animation():
-#     """Start the loading animation and return a function to stop it"""
-#     stop_event = threading.Event()
-#     loading_thread = threading.Thread(target=show_loading, args=(stop_event,))
-#     loading_thread.daemon = True
-#     loading_thread.start()
-    
-#     def stop_fn():
-#         """Stop the loading animation"""
-#         stop_event.set()
-#         loading_thread.join()
-#     return stop_fn
 
 # Create a response using the chat completions API
 # Why chat/completions instead of /v1/responses?
@@ -65,7 +53,7 @@ except Exception as e:
 # - Cost-effective with gpt-4o-mini
 # - Full control over conversation state and tool execution
 def converse():
-    print("enter N to create new conversation. E to exit.")
+    print(f"enter {N} to create new conversation. {E} to exit.")
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
 
     try:
@@ -75,23 +63,34 @@ def converse():
             user_input = input(">>")
             if user_input in ["N", "E"]:
                 return user_input
-            messages.append({"role": "user", "content": user_input})
-            response = client.chat.completions.create(
-                model=MODEL,
-                messages=messages
-            )
-            # Stop the loading animation
-            # if stop_loading_fn:
-            #     stop_loading_fn()
-            # Extract and print the assistant's response
-            assistant_response = response.choices[0].message.content
-            messages.append({"role": "system", "content": assistant_response})
-            print(f"{assistant_response}")
 
+            userInputMessage = {"role": "user", "content": user_input}
+            isActionMessage = [
+                {"role": "system", "content": f"You are helping me figure out if this user message is asking for an action to be taken in their google suite, or if its a generic question. Answer {ACTION} or {NON_ACTION}"},
+                userInputMessage
+            ]
+
+            isActionResponse = response = client.chat.completions.create(
+                model=MODEL,
+                messages=isActionMessage
+            )
+
+            requestType = isActionResponse.choices[0].message.content
+            print(f"The nature of this request is: {requestType}")
+
+            if requestType == NON_ACTION:
+                messages.append(userInputMessage)
+                response = client.chat.completions.create(
+                    model=MODEL,
+                    messages=messages
+                )
+                # Extract and print the assistant's response
+                assistant_response = response.choices[0].message.content
+                messages.append({"role": "system", "content": assistant_response})
+                print(f"{assistant_response}")
+            else: 
+                print("Actions are not supported yet\n")
     except Exception as e:
-        # Stop loading animation if there's an error
-        # if stop_loading_fn:
-        #     stop_loading_fn()
         print(f"\n✗ Error generating response: {e}")
 
 
@@ -99,7 +98,7 @@ print("How can we help you today?\n")
 response = ""
 while 1:
     response = converse()
-    if response == "N":
+    if response == N:
         continue
-    if response == "E":
+    if response == E:
         break
